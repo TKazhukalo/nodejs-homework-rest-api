@@ -2,9 +2,13 @@ const { Contact } = require("../models/contact");
 
 const { HttpError } = require("../helpers");
 const { ctrlWrapper } = require("../helpers");
+//const { all } = require("../app");
 
 const listContacts = async (req, res) => {
-    const result = await Contact.find({});
+    const { _id: owner } = req.user;
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (page - 1) * limit;
+    const result = await Contact.find({owner},"-createdAt -updatedAt",{skip,limit} ).populate("owner","name email");
     res.json(result);
 }
 
@@ -18,7 +22,8 @@ const getContactById = async (req, res) => {
     }
 
 const addContact = async (req, res) => {
-    const result = await Contact.create(req.body);
+    const { _id: owner } = req.user;
+    const result = await Contact.create({ ...req.body,owner });
     res.status(201).json(result);
 }
 
@@ -51,11 +56,28 @@ const removeContact = async (req, res) => {
         message:"contact deleted"
         })
 }
+
+const filterByFavorite = async(req,res)=> {
+    const { favorite } = req.query;
+    try {
+        if (favorite) {
+            const filteredContacts = await Contact.find({ owner: req.user._id, favorite: true });
+            res.json(filteredContacts);
+        } else {
+            const allContacts = await Contact.find({ owner: req.user._id });
+            res.json(allContacts);
+        }
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 module.exports = {
     listContacts: ctrlWrapper(listContacts),
     getContactById: ctrlWrapper(getContactById),
     addContact: ctrlWrapper(addContact),
     updateContact: ctrlWrapper(updateContact),
     updateStatusContact:ctrlWrapper(updateStatusContact),
-    removeContact:ctrlWrapper(removeContact),
+    removeContact: ctrlWrapper(removeContact),
+    filterByFavorite:ctrlWrapper(filterByFavorite),
 }
