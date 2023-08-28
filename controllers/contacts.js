@@ -2,7 +2,7 @@ const { Contact } = require("../models/contact");
 
 const { HttpError } = require("../helpers");
 const { ctrlWrapper } = require("../helpers");
-//const { all } = require("../app");
+
 
 const listContacts = async (req, res) => {
     const { _id: owner } = req.user;
@@ -60,7 +60,7 @@ const removeContact = async (req, res) => {
 const filterByFavorite = async(req,res)=> {
     const { favorite } = req.query;
     try {
-        if (favorite) {
+        if (favorite==="true") {
             const filteredContacts = await Contact.find({ owner: req.user._id, favorite: true });
             res.json(filteredContacts);
         } else {
